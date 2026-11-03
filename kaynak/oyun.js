@@ -443,7 +443,7 @@ TYPES.exec = (m, stage) => {
       }
       case "scan": {
         const sc = st.scans[0];
-        pickBox(st, `Klavyeden <code>${esc(m.stdin || "")}</code> geldi. Kurye bunu hangi adrese bırakır?`, sc.name, "Parantezdeki &amp; işaretinin yanına bak. Kuryeye verilen adres o.", () => {
+        pickBox(st, `Klavyeden <code>${esc(C.showVal(sc.type, sc.v, false))}</code> geldi. Kurye bunu hangi adrese bırakır?`, sc.name, "Parantezdeki &amp; işaretinin yanına bak. Kuryeye verilen adres o.", () => {
           nice(`Kurye <code>${C.hex(sc.addr)}</code> adresine teslim etti.`);
           commit(st);
         });
@@ -499,9 +499,15 @@ TYPES.order = (m, stage) => {
   const codeEl = $("#code"), ramEl = $("#ram"), lcdEl = $("#lcd"), cmd = $("#cmd"), traceEl = $("#trace");
   const labels = {};
   steps.forEach((st) => { if (st.role && !labels[st.role]) labels[st.role] = m.code.slice(st.from, st.to); });
+  const bodyAt = steps.findIndex((st) => st.role === "body");
+  if (bodyAt >= 0) {
+    let e = bodyAt;
+    while (steps[e + 1] && steps[e + 1].role === "body") e++;
+    labels.body = m.code.slice(steps[bodyAt].from, steps[e].to).replace(/\s+/g, " ");
+  }
   const names = { init: "başlangıç", cond: "koşul", body: "gövde", upd: "artış", exit: "döngüden çık" };
-  const order = ["init", "cond", "body", "upd", "exit"];
-  const mistakes = { init: "Başlangıç en başta, sadece bir kez.", cond: "Her turun başında önce koşul sorulur.", body: "Koşul doğruysa sıra gövdede.", upd: "Gövde bitti, şimdi i ilerlemeli.", exit: "Koşul yanlış çıktıysa döngü biter." };
+  const order = ["init", "cond", "body", "upd", "exit"].filter((r) => r === "exit" || labels[r]);
+  const mistakes = { init: "Başlangıç en başta, sadece bir kez.", cond: "Her turun başında önce koşul sorulur.", body: "Koşul doğruysa sıra gövdede.", upd: "Gövde bitti, şimdi i ilerlemeli.", exit: "Koşul yanlış çıktıysa döngü biter.", ...m.mistakes };
   let i = 0, last = "";
   renderRam(ramEl, []);
   lcdEl.textContent = "";
@@ -530,6 +536,11 @@ TYPES.order = (m, stage) => {
             return;
           }
           apply(st);
+          if (want === "body") {
+            const parts = [last];
+            while (steps[i] && steps[i].role === "body") { apply(steps[i]); parts.push(last); }
+            last = parts.join("<br>");
+          }
           next();
         } else {
           b.classList.add("no");
@@ -929,9 +940,11 @@ TYPES.tours = (m, stage) => {
   const ask = () => {
     const h = m.loops[idx];
     if (!h) return finishMission();
-    const src = `int i;\nint tur = 0;\nfor (${h}) {\n    tur++;\n    printf("%d ", i);\n}`;
+    const src = m.full
+      ? `int tur = 0;\n${h.replace("{", '{\n    tur++;\n    printf("%d ", i);')}`
+      : `int i;\nint tur = 0;\nfor (${h}) {\n    tur++;\n    printf("%d ", i);\n}`;
     const res = C.run(src);
-    const shown = `for (${h}) {\n    // gövde\n}`;
+    const shown = m.full ? h : `for (${h}) {\n    // gövde\n}`;
     $("#code").innerHTML = codeHTML(shown);
     $("#cnt").textContent = `${idx + 1} / ${m.loops.length}`;
     $("#tape").innerHTML = "";
@@ -944,7 +957,7 @@ TYPES.tours = (m, stage) => {
       const toks = res.out.trim() ? res.out.trim().split(/\s+/) : [];
       $("#tape").innerHTML = (toks.map((t) => `<span>${esc(t)}</span>`).join("") || `<em class="why">Gövde hiç çalışmadı.</em>`);
       $("#turn").textContent = `${toks.length} tur, sonra i = ${res.vars.i.v}`;
-      cmd.innerHTML = `<div class="prompt">Her kutu bir tur. Son turdan sonra artış bir kez daha çalıştı, koşul yanlış çıktı: <code>i = ${res.vars.i.v}</code></div><div class="row"><button class="btn gold" id="goon">Sonraki döngü</button></div>`;
+      cmd.innerHTML = `<div class="prompt">Her kutu bir tur. ${m.full ? "Son turda i değişti, koşul yanlış çıktı ve döngü bitti" : "Son turdan sonra artış bir kez daha çalıştı, koşul yanlış çıktı"}: <code>i = ${res.vars.i.v}</code></div><div class="row"><button class="btn gold" id="goon">Sonraki döngü</button></div>`;
       $("#goon").onclick = () => { idx++; ask(); };
       $("#goon").focus({ preventScroll: true });
     };
@@ -952,7 +965,7 @@ TYPES.tours = (m, stage) => {
       const a = $("#t1").value.trim(), b = $("#t2").value.trim();
       if (Number(a) === res.vars.tur.v && Number(b) === res.vars.i.v && a !== "" && b !== "") { nice(); show(); return; }
       tries++;
-      const whichWrong = Number(a) !== res.vars.tur.v ? "Tur sayısı tutmuyor." : "Tur sayısı doğru ama i tutmuyor. Son turdan sonra artış bir kez daha çalışır.";
+      const whichWrong = Number(a) !== res.vars.tur.v ? "Tur sayısı tutmuyor." : (m.full ? "Tur sayısı doğru ama i tutmuyor. Son turun içinde i'ye ne yazıldığına bak." : "Tur sayısı doğru ama i tutmuyor. Son turdan sonra artış bir kez daha çalışır.");
       oops(whichWrong);
       if (tries >= 2) { show(); }
     };
@@ -1305,6 +1318,7 @@ function boot() {
     `Giriş / çıkış kapıları ................ <span class="ok">TAMAM</span>`,
     `Karar birimi .......................... <span class="ok">TAMAM</span>`,
     `Saat devresi .......................... <span class="ok">TIK TAK TAMAM</span>`,
+    `Bekçi devresi ......................... <span class="ok">NÖBETTE</span>`,
     `Ana işlemci ........................... <span class="am">STAJYER (yeterli)</span>`, ``,
     `$ gcc merhaba.c -o merhaba`, `$ ./merhaba`, `<b class="ok">Merhaba, dunya!</b>`, ``,
     `GCC Abi: Sistem açıldı. Fena değilsin stajyer. Değişken nedir bilen birini görmek güzel.`,
@@ -1361,6 +1375,7 @@ const CHIP_POS = {
   io: { x: 670, y: 240, w: 190, h: 110 },
   alu: { x: 370, y: 240, w: 190, h: 110 },
   clk: { x: 70, y: 240, w: 190, h: 110 },
+  wdt: { x: 60, y: 420, w: 190, h: 110 },
   cpu: { x: 330, y: 420, w: 240, h: 130 },
 };
 const TRACES = [
@@ -1369,7 +1384,8 @@ const TRACES = [
   ["type", [[755, 150], [755, 240]], [[775, 150], [775, 240]]],
   ["io", [[670, 285], [560, 285]], [[670, 305], [560, 305]]],
   ["alu", [[370, 285], [260, 285]], [[370, 305], [260, 305]]],
-  ["clk", [[155, 350], [155, 475], [330, 475]], [[175, 350], [175, 495], [330, 495]]],
+  ["clk", [[155, 350], [155, 420]], [[175, 350], [175, 420]]],
+  ["wdt", [[250, 465], [330, 465]], [[250, 485], [330, 485]]],
 ];
 function mapSVG(selId) {
   const secDone = (s) => s.missions.every((m) => S.done[m.id]);
@@ -1401,9 +1417,9 @@ function mapSVG(selId) {
       <text class="prog" x="${p.x + p.w - 10}" y="${p.y + 20}" text-anchor="end">${n}/${s.missions.length}</text>
     </g>`;
   });
-  const deco = [[250, 60], [640, 60], [630, 200], [320, 200], [40, 200], [870, 200], [620, 450], [640, 500], [40, 500], [90, 410], [760, 450], [800, 520]]
+  const deco = [[250, 60], [640, 60], [630, 200], [320, 200], [40, 200], [870, 200], [620, 450], [640, 500], [30, 500], [30, 410], [760, 450], [800, 520]]
     .map(([x, y]) => `<circle class="via" cx="${x}" cy="${y}" r="4"/>`).join("");
-  const caps = [[620, 400], [660, 400], [700, 400], [240, 420], [270, 420]].map(([x, y]) => `<rect class="deco" x="${x}" y="${y}" width="26" height="46" rx="3"/>`).join("");
+  const caps = [[620, 400], [660, 400], [700, 400], [262, 505], [294, 505]].map(([x, y]) => `<rect class="deco" x="${x}" y="${y}" width="26" height="46" rx="3"/>`).join("");
   return `<svg viewBox="0 0 900 570" role="img" aria-label="Anakart haritası">${tr}${deco}${caps}${chips}
     <text class="silkt" x="620" y="540">CPU-STAJYERI REV 1.0</text>
     <text class="silkt" x="40" y="550">C1 C2 · GCC ABI ONAYLI</text></svg>`;
@@ -1424,7 +1440,7 @@ function home() {
       : "Makine açıldı, her şey çalışıyor. Artık Laboratuvar'da kendi kodlarını izleyebilirsin.";
   app.innerHTML = `<div class="wrap">
     <div class="hero">
-      <div><div class="rev">C DİLİ · DEĞİŞKENDEN for DÖNGÜSÜNE</div><h1>CPU <em>STAJYERİ</em></h1>
+      <div><div class="rev">C DİLİ · DEĞİŞKENDEN DÖNGÜLERE</div><h1>CPU <em>STAJYERİ</em></h1>
       <p>Bilgisayarın işlemcisi yandı, yerine seni aldılar. C kodunu satır satır sen çalıştır, belleğe sen yaz, makineyi sen aç.</p></div>
       <div class="stats">
         <div class="rank"><span>Rütbe</span><b>${esc(rankOf(S.xp))}</b></div>

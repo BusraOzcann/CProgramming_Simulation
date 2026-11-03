@@ -20,7 +20,7 @@ body() {
   printf '</head>\n<body>\n'
   body
   printf '</body>\n</html>\n'
-} > ../cpu-stajyeri.html
+} > ../index.html
 # Claude Artifact için yalnızca gövde
 if [ -n "$1" ]; then body > "$1"; fi
-wc -c ../cpu-stajyeri.html
+wc -c ../index.html

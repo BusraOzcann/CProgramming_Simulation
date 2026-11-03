@@ -767,7 +767,283 @@ scanf("%d", &n);
           { stdin: "2", expect: "1" },
         ],
         hints: ["int sayac = 0; dışarıda dursun.", "Döngünün içinde if (i % 2 == 0) diye sor.", "if (i % 2 == 0) { sayac++; }"],
-        win: "Saat devresi tıklıyor. Geriye tek çip kaldı. Ana işlemci.",
+        win: "Saat devresi tıklıyor. Sırada bekçi devresi var. Yani for'un kardeşleri.",
+      },
+    ],
+  },
+
+  /* ==================== WDT ==================== */
+  {
+    id: "wdt", code: "WDT", name: "Bekçi Devresi", topic: "while ve do-while döngüleri",
+    missions: [
+      {
+        id: "whileanat", type: "order", title: "while'ın Anatomisi",
+        say: "Anakartta bir bekçi devresi vardır, adı watchdog. Bir şey değişene kadar bekler, sorar, yine bekler. <code>while</code> tam olarak bu.",
+        card: `<pre class="mini">başlangıç;
+while ( koşul ) {
+    gövde
+    artış
+}</pre>
+<p><code>for</code>'daki üç parça hala burada, sadece yerleri değişti. Başlangıç döngüden önce, artış gövdenin içinde.</p>
+<p>Daire aynı: <b>koşul → gövde → koşul → ...</b> Koşul yanlış çıktığı an döngü biter.</p>`,
+        code: R`int i = 0;
+while (i < 3) {
+    printf("%d\n", i);
+    i++;
+}`,
+        after: [
+          {
+            q: "<code>while</code> gövdesindeki <code>i++</code> satırını silsek ne olur?",
+            opts: ["i hep 0 kalır, koşul hep doğru olur, döngü bitmez.", "Derleyici i'yi kendisi artırır.", "Döngü hiç çalışmaz."], a: 0,
+            why: "for'da artışı unutmak zordur, çünkü parantezde yeri vardır. while'da kimse sana hatırlatmaz. Koşulu değiştirecek satırı sen yazmalısın.",
+          },
+        ],
+        win: "Aynı daire, başka kılık. Parçaların yerini görürsen for ile while arasında geçiş bedava.",
+      },
+      {
+        id: "whilehand", type: "exec", title: "Geri Sayım", showTrace: true,
+        say: "Fırlatma rampası gibi düşün. Bekçi her turda soruyor: 'Daha sıfıra gelmedik mi?'",
+        card: `<p>Bu kez hepsini sen çalıştırıyorsun. Her turun başında koşula cevap ver, sonra gövdeyi satır satır yürüt.</p>
+<p>Gövde bitince otomatik olarak koşula dönülür. Süslü parantezin kapanışı "yukarı dön" demektir.</p>`,
+        code: R`int n = 3;
+while (n > 0) {
+    printf("%d\n", n);
+    n = n - 1;
+}
+printf("Bitti\n");`,
+        after: [
+          {
+            q: "Döngü bittiğinde <code>n</code> kaç, ekrana yazılan son sayı neden 1?",
+            opts: ["n 0. Koşul 0 > 0 yanlış çıktığı için gövdeye girilmedi, 0 hiç yazılmadı.", "n 1. Döngü n 1 olunca durur.", "n -1. Döngü bir tur fazla döner."], a: 0,
+            why: "Koşul gövdeden önce sorulur. n 0 olduğu anda bekçi kapıyı kapatır, printf'e sıra gelmez.",
+          },
+        ],
+        win: "Üç, iki, bir, bitti. NASA seni henüz aramadı ama sabret.",
+      },
+      {
+        id: "forwhile", type: "parsons", title: "for'dan while'a Çeviri",
+        say: "Patron for sevmiyormuş. Aynı işi while ile istiyor. Parçaları diz, tuzaklara dikkat et.",
+        card: `<p>Bu <code>for</code> döngüsünü <code>while</code> ile yeniden kur:</p>
+<pre class="mini">for (int i = 1; i <= 5; i++) {
+    printf("%d ", i);
+}</pre>
+<p>printf ile i++ satırlarının sırası önemli. Yer değiştirirlerse çıktıya ne olur, düşün.</p>`,
+        given: [],
+        lines: ["int i = 1;", "while (i <= 5) {", "while (i < 5) {", R`printf("%d ", i);`, "i++;", "i--;", "}"],
+        goal: "Ekrana <code>1 2 3 4 5</code> yazdırmalı.",
+        expect: "1 2 3 4 5",
+        win: "Her for bir while'a çevrilebilir, tersi de doğru. Hangisini seçeceğin, kodu okuyacak kişiye bağlı.",
+      },
+      {
+        id: "whiletuner", type: "fill", title: "Bekçi Ayar Masası", live: true,
+        say: "Döngü ayar masasının while modeli. Yine dört düğme, yine aynı fan.",
+        card: `<p>Başlangıç, koşul ve gövdedeki değişimi ayarla. Çıktı anında sağda görünür.</p>`,
+        rounds: [
+          { target: "0 1 2 3", start: [1, 0, 0, 0], say: "Sıfırdan üçe." },
+          { target: "3 2 1", start: [0, 0, 1, 0], say: "Geri sayım. Hem koşulun yönü hem de değişimin yönü dönmeli." },
+          { target: "2 4 6 8", start: [0, 1, 1, 0], say: "İkişer ikişer." },
+          { target: "1 2 4 8", start: [2, 0, 2, 2], say: "İkiye katla. 0'dan başlarsan 0 hep 0 kalır, fan kalkar." },
+        ].map((r) => Object.assign(r, {
+          template: R`int i = {{0}};
+while (i {{1}} {{2}}) {
+    printf("%d ", i);
+    {{3}};
+}`,
+          slots: [["0", "1", "2", "3"], ["<", "<=", ">", ">="], ["0", "3", "4", "8", "10"], ["i++", "i--", "i = i + 2", "i = i * 2"]],
+        })),
+        win: "while'ın bitmesi senin elinde. Koşul er geç yanlış olacak mı, kendine bunu sor.",
+      },
+      {
+        id: "whilebug", type: "bugfix", title: "Hesaplayıp Yazmamak",
+        say: "0, 1, 2 yazması gereken kod sonsuza kadar 0 yazıyor. Yazan stajyer 'artırdım ama' diyor. Bak bakalım artırmış mı.",
+        card: `<p>RAM devresini hatırla: bir kutunun içi ancak <b>atama</b> ile değişir.</p>`,
+        code: R`int i = 0;
+while (i < 3) {
+    printf("%d\n", i);
+    i + 1;
+}`,
+        expect: "0\n1\n2",
+        bugLine: 4,
+        options: [
+          { text: R`    i = i + 1;`, ok: true, why: "Sonuç sonunda kutuya yazıldı." },
+          { text: R`    i == i + 1;`, why: "Bu bir soru, atama değil. Cevabı da hiçbir yere gitmiyor." },
+          { text: R`    i + 2;`, why: "Daha çok hesaplamak işe yaramaz. Sonuç yine hiçbir kutuya yazılmıyor." },
+          { text: R`    i + 1 = i;`, why: "Değer sağdan sola akar. Solda kutu olmalı." },
+        ],
+        win: "i + 1 hesaplanır ve çöpe gider. Eşittir yoksa RAM'e bir şey yazılmaz. Sınavda bunu gören gülümser.",
+      },
+      {
+        id: "sentinel", type: "exec", title: "Sıfır Gelene Kadar", showTrace: true,
+        say: "Şimdi while'ın asıl işi. Kullanıcı kaç sayı girecek, bilmiyoruz. for bunu sevmez, while sever.",
+        card: `<p><b>Kaç tur döneceğin belliyse</b> <code>for</code> rahattır. <b>Bir şey olana kadar dönüyorsan</b> <code>while</code> daha doğal.</p>
+<p>Burada kullanıcı <code>0</code> girene kadar sayılar toplanıyor. Bu görevde klavyeden sırayla <code>4</code>, <code>7</code>, <code>0</code> gelecek.</p>`,
+        code: R`int x;
+int toplam = 0;
+scanf("%d", &x);
+while (x != 0) {
+    toplam = toplam + x;
+    scanf("%d", &x);
+}
+printf("%d\n", toplam);`,
+        stdin: "4 7 0",
+        after: [
+          {
+            q: "Bu kodda <code>scanf</code> neden iki kez yazıldı?",
+            opts: ["İlki koşula bakmadan önce x'i doldurur, ikincisi her turda yeni sayıyı getirir.", "Klavye bazen ilk seferde okunmaz, garanti olsun diye.", "İkisi aynı anda çalışır, biri x'e biri toplam'a yazar."], a: 0,
+            why: "İlk scanf olmasa koşul çöp değere bakardı. Gövdedeki olmasa x hiç değişmez, döngü bitmezdi. x'in içinde her an sadece son okunan sayı var.",
+          },
+        ],
+        win: "Bu kalıbın adı nöbetçi değer. Özel bir değer gelene kadar çalış, gelince dur.",
+      },
+      {
+        id: "sumzero", type: "write", title: "Nöbetçi Toplam",
+        say: "Az önce çalıştırdığın kalıbı bu sefer kendin yaz. Kopya çekmeden, ben görüyorum.",
+        card: `<p>Kullanıcı <code>0</code> girene kadar sayıları topla. 0 geldiğinde toplamı yazdır.</p>`,
+        goal: "Klavyeden <code>0</code> gelene kadar tam sayı oku, toplamlarını yazdır. <code>while</code> kullan.",
+        code: R`int x;
+int toplam = 0;
+
+// kodun burada
+`,
+        tests: [
+          { stdin: "5 3 0", expect: "8" },
+          { stdin: "0", expect: "0" },
+          { stdin: "-2 2 9 0", expect: "9" },
+        ],
+        check: (src) => (/while\s*\(/.test(src) ? null : "Bu görevde while kullanacaksın."),
+        hints: ["Koşula bakmadan önce x'in dolu olması lazım: önce bir scanf.", "while (x != 0) içinde önce toplama ekle, sonra yeni sayıyı oku.", `scanf("%d", &x);  while (x != 0) { toplam = toplam + x; scanf("%d", &x); }  printf("%d\\n", toplam);`],
+        win: "Girdi kaç tane olursa olsun çalışıyor. for ile bunu yazmak için çok dil dökerdin.",
+      },
+      {
+        id: "doanat", type: "order", title: "do-while: Önce Yap, Sonra Sor",
+        say: "while önce sorar, sonra yapar. <code>do-while</code> tam tersi. Önce yapar, sonra 'Bir daha mı?' der. Benim stajyer alma yöntemim gibi.",
+        card: `<pre class="mini">do {
+    gövde
+} while ( koşul );</pre>
+<p>Koşul <b>sonda</b> sorulur, bu yüzden gövde <b>en az bir kez</b> çalışır.</p>
+<p>Sondaki <code>;</code> zorunludur. <code>while</code> ve <code>for</code>'da yoktur, burada vardır.</p>`,
+        code: R`int i = 0;
+do {
+    printf("%d\n", i);
+    i++;
+} while (i < 2);`,
+        mistakes: { body: "do-while önce gövdeyi çalıştırır. Koşul sonra.", cond: "Gövde bitti. Şimdi sıra sondaki koşulda." },
+        after: [
+          {
+            q: "<code>do-while</code>'ın <code>while</code>'dan tek farkı nedir?",
+            opts: ["Koşul sonda sorulur, gövde en az bir kez çalışır.", "Sadece ondalıklı sayılarla çalışır.", "Sonsuz döngüye giremez."], a: 0,
+            why: "Daire aynı, sadece giriş kapısı farklı. while kapıda kimlik sorar, do-while içeri alıp sonra sorar.",
+          },
+        ],
+        win: "Önce gövde, sonra koşul. Bu kadar basit. Sıradaki görevde farkı canlı göreceksin.",
+      },
+      {
+        id: "dovswhile", type: "exec", title: "Bir Kez Mutlaka", showTrace: true,
+        say: "İki döngü, ikisinin de koşulu baştan yanlış. Biri çalışır, biri çalışmaz. Hangisi?",
+        card: `<p>İkisinde de değişken 5, koşul <code>&lt; 3</code>. Yani koşul ilk sorulduğu anda yanlış.</p>`,
+        code: R`int a = 5;
+while (a < 3) {
+    printf("while: %d\n", a);
+    a++;
+}
+int b = 5;
+do {
+    printf("do: %d\n", b);
+    b++;
+} while (b < 3);`,
+        after: [
+          {
+            q: "Program bitti. <code>a</code> ve <code>b</code> neden farklı?",
+            opts: ["while gövdeye hiç girmedi, a 5 kaldı. do-while bir kez girdi, b 6 oldu.", "b double olduğu için farklı artıyor.", "do-while koşula hiç bakmaz."], a: 0,
+            why: "Koşul baştan yanlışsa fark ortaya çıkar: while sıfır tur, do-while bir tur döner.",
+          },
+        ],
+        win: "RAM'e bak: a 5, b 6. Tek bir tur farkı, ama bütün hikaye bu.",
+      },
+      {
+        id: "dobug", type: "bugfix", title: "Sondaki Küçük İşaret",
+        say: "Derleyici yine bağırıyor. Yani ben bağırıyorum. Kod çalışmıyor bile. Neyi unuttu bu stajyer?",
+        card: `<p>do-while'ın kendine has bir yazım kuralı vardı. Bilgi kartını hatırla.</p>`,
+        code: R`int i = 0;
+do {
+    printf("%d\n", i);
+    i++;
+} while (i < 3)`,
+        expect: "0\n1\n2",
+        bugLine: 5,
+        options: [
+          { text: R`} while (i < 3);`, ok: true, why: "do-while noktalı virgülle biter." },
+          { text: R`} while (i < 3) {`, why: "Burada yeni blok açılmaz. do-while'ın gövdesi yukarıda bitti." },
+          { text: R`} while i < 3;`, why: "Koşulun parantezi şart." },
+          { text: R`} while (i < 3):`, why: "İki nokta değil, noktalı virgül." },
+        ],
+        win: "while (...) sonuna ; koymak normal while'da felaket, do-while'da zorunluluk. C seni böyle sever.",
+      },
+      {
+        id: "validate", type: "exec", title: "Geçerli Giriş", showTrace: true,
+        say: "Kullanıcıya 1 ile 5 arası puan ver dedik. 9 giriyor. Kullanıcı böyledir. do-while tam bunun için var.",
+        card: `<p>Önce kullanıcıya <b>sormak zorundasın</b>, ancak ondan sonra cevabı kontrol edebilirsin. Bu yüzden gövdenin en az bir kez çalışması gerekir.</p>
+<p><code>||</code> "veya" demek: biri doğruysa koşul doğrudur. Bu görevde klavyeden sırayla <code>9</code>, <code>-1</code>, <code>3</code> gelecek.</p>`,
+        code: R`int puan;
+do {
+    printf("Puan gir:\n");
+    scanf("%d", &puan);
+} while (puan < 1 || puan > 5);
+printf("Puan: %d\n", puan);`,
+        stdin: "9 -1 3",
+        win: "Hatalı girdi geçemez. Her form ekranının arkasında bu mantık var.",
+      },
+      {
+        id: "whiletours", type: "tours", title: "Kaç Tur? Bekçi Sürümü", full: true,
+        say: "Yine sayıyoruz. Ama dikkat et, bazıları do-while. Koşul baştan yanlış olsa bile kapı açılabilir.",
+        card: `<p>Önce döngü tipine bak: koşul başta mı, sonda mı? Sonra <code>i</code>'nin her turda aldığı değerleri kağıda yaz.</p>
+<p>Alttaki şeritte her kutu, o turun başındaki <code>i</code> değerini gösterecek.</p>`,
+        loops: [
+          "int i = 0;\nwhile (i < 3) {\n    i++;\n}",
+          "int i = 5;\nwhile (i < 5) {\n    i++;\n}",
+          "int i = 5;\ndo {\n    i++;\n} while (i < 5);",
+          "int i = 10;\nwhile (i > 0) {\n    i = i - 3;\n}",
+          "int i = 0;\ndo {\n    i = i + 2;\n} while (i < 5);",
+          "int i = 1;\nwhile (i < 20) {\n    i = i * 2;\n}",
+        ],
+        win: "Üçüncü soruda çoğu kişi 0 der. Sen artık demezsin.",
+      },
+      {
+        id: "collatz", type: "predict", title: "Çılgın Dizi",
+        say: "Matematikçilerin yüz yıldır çözemediği bir dizi. Korkma, senden çözmeni istemiyorum. Sadece çalıştır.",
+        card: `<p>Kural basit: sayı çiftse yarıya indir, tekse 3 ile çarpıp 1 ekle. 1'e gelince dur. Kaç adımda biteceğini önceden bilmek zor, o yüzden <code>for</code> değil <code>while</code>.</p>
+<p>Kağıda <code>n</code> ve <code>adim</code> sütunlarını yaz.</p>`,
+        code: R`int n = 6;
+int adim = 0;
+while (n != 1) {
+    if (n % 2 == 0) {
+        n = n / 2;
+    } else {
+        n = 3 * n + 1;
+    }
+    adim++;
+}`,
+        ask: ["n", "adim"],
+        win: "6, 3, 10, 5, 16, 8, 4, 2, 1. Buna Collatz dizisi deniyor. Her sayının 1'e ulaşıp ulaşmadığını hala kimse kanıtlayamadı.",
+      },
+      {
+        id: "pin", type: "write", title: "Şifre Kapısı", boss: true,
+        say: "Devre sonu. Kapının şifresi 1234. Doğru girilene kadar sormaya devam et, kaçıncı denemede bilindiğini söyle.",
+        card: `<p>Önce sormak zorundasın, sonra kontrol. Bu cümle sana bir şey hatırlatıyor mu?</p>`,
+        goal: "Klavyeden sayı oku. Sayı <code>1234</code> olana kadar okumaya devam et, sonunda toplam deneme sayısını yazdır. <code>do-while</code> kullan.",
+        code: R`int sifre;
+int deneme = 0;
+
+// kodun burada
+`,
+        tests: [
+          { stdin: "1 2 1234", expect: "3" },
+          { stdin: "1234", expect: "1" },
+          { stdin: "5 1234", expect: "2" },
+        ],
+        check: (src) => (/\bdo\s*\{/.test(src) ? null : "Bu görevde do-while kullanacaksın."),
+        hints: ["Gövdede iki iş var: scanf ile oku, deneme sayacını artır.", "Koşul 'şifre yanlış olduğu sürece' demeli: sifre != 1234", `do { scanf("%d", &sifre); deneme++; } while (sifre != 1234);  printf("%d\\n", deneme);`],
+        win: "Bekçi devresi devrede. for, while, do-while hepsi aynı dairenin üç kapısı. Geriye tek çip kaldı: ana işlemci.",
       },
     ],
   },
@@ -839,7 +1115,7 @@ const ABI = {
 };
 
 const RANKS = [
-  [0, "Stajyer"], [500, "Çaylak Çekirdek"], [1500, "Tek Çekirdek"], [2500, "Çift Çekirdek"], [3500, "Turbo Boost"], [4500, "Overclock Efsanesi"],
+  [0, "Stajyer"], [700, "Çaylak Çekirdek"], [2000, "Tek Çekirdek"], [3400, "Çift Çekirdek"], [4800, "Turbo Boost"], [6200, "Overclock Efsanesi"],
 ];
 
 const LAB_EXAMPLES = [
@@ -872,6 +1148,29 @@ for (i = 1; i <= 5; i++) {
     printf("i=%d toplam=%d\n", i, toplam);
 }
 printf("Sonuc: %d\n", toplam);` },
+  { name: "while ile geri sayım", code: R`int n = 3;
+while (n > 0) {
+    printf("%d\n", n);
+    n = n - 1;
+}
+printf("Bitti\n");` },
+  { name: "do-while ve while farkı", code: R`int a = 5;
+while (a < 3) {
+    a++;
+}
+int b = 5;
+do {
+    b++;
+} while (b < 3);
+printf("a = %d, b = %d\n", a, b);` },
+  { name: "Sıfır gelene kadar topla", code: R`int x;
+int toplam = 0;
+scanf("%d", &x);
+while (x != 0) {
+    toplam = toplam + x;
+    scanf("%d", &x);
+}
+printf("Toplam: %d\n", toplam);`, stdin: "4 7 0" },
   { name: "İç içe döngü", code: R`int i, j;
 for (i = 1; i <= 3; i++) {
     for (j = 1; j <= i; j++) {
