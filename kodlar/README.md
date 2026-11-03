@@ -17,17 +17,18 @@ Bir sonraki örnek için yalnızca `.c` dosyasının adını değiştirip yenide
 
 ## Önerilen ders akışı
 
-Toplam 3 × 90 dakika; oturum aralarında mola verin. Süreler öğrencilerin hızına göre esnetilebilir.
+Üç oturum: 90 + 110 + 90 dakika (toplam 290 dakika); oturum aralarında mola verin. İkinci oturuma eklenen `switch / case` için 20 dakika ayrılmıştır. Süreler öğrencilerin hızına göre esnetilebilir.
 
 | Oturum | Süre | Konu ve dosyalar |
 |---|---:|---|
 | 1 | 15 dk | Algoritma: İki notun ortalamasını bulma adımlarını kâğıda yazma |
 | 1 | 20 dk | İlk program ve çıktı: `01_merhaba.c` |
-| 1 | 30 dk | Değişkenler: `02_degiskenler.c` |
+| 1 | 30 dk | `int`, `double`, `char`, `float`: `02_degiskenler.c` |
 | 1 | 25 dk | İşlemler ve ortalama: `03_aritmetik.c`, `04_sabit_not_ortalamasi.c` |
 | 2 | 10 dk | Önceki örneklerden çıktı tahmini |
 | 2 | 25 dk | Kullanıcıdan veri alma: `05`, `06` |
-| 2 | 40 dk | Koşullar: `07`, `08` |
+| 2 | 40 dk | `if / else`, `else if` ve not aralıkları: `07`, `08`, `08a` |
+| 2 | 20 dk | Menü ile `switch / case`, `break`, `default`: `08b_switch_case.c` |
 | 2 | 15 dk | Birleştirme uygulaması: `09_not_degerlendirme.c` |
 | 3 | 10 dk | Tekrar ihtiyacı: `10_donguye_neden_ihtiyac_var.c` |
 | 3 | 25 dk | İlk döngü: `11_for_temel.c` |
@@ -42,13 +43,15 @@ Anlatım sırası: **Kısa açıklama → çalışan örnek → çıktı tahmini
 | Dosya | Kazanım | Örnek girdi → beklenen sonuç |
 |---|---|---|
 | `01_merhaba.c` | `printf`, `\n`, program iskeleti | Girdi yok → iki satır mesaj |
-| `02_degiskenler.c` | `int`, `double`, atama | Girdi yok → 18, 82.50 ve 19 değerleri |
+| `02_degiskenler.c` | `int`, `double`, `char`, `float`, atama | Girdi yok → 18, 82.50, A, 23.5 ve 19 değerleri |
 | `03_aritmetik.c` | Aritmetik, tam sayı bölmesi, kalan | Girdi yok → toplam 7, bölüm 2, ondalıklı bölüm 2.50 |
 | `04_sabit_not_ortalamasi.c` | Hesaplama ve parantez | Girdi yok → 77.50 |
 | `05_kullanicidan_sayi_alma.c` | `scanf`, `&`, `int` okuma | `18` → yaş 18 |
 | `06_kullanicidan_not_ortalamasi.c` | `double` okuma | `70` ve `85` → 77.50 |
 | `07_if_else.c` | İki seçenekli karar | `49` → Kaldi; `50` → Gecti |
 | `08_else_if.c` | Üç farklı durum | `8` → Pozitif; `-3` → Negatif; `0` → Sifir |
+| `08a_not_araliklari.c` | Birden fazla `else if`, koşulların sırası | `85` → Cok iyi; `70` → Iyi; `50` → Gecer; `49` → Kaldi |
+| `08b_switch_case.c` | Sabit seçenekler, `case`, `break`, `default` | `2` → koşullar mesajı; `9` → geçersiz seçim mesajı |
 | `09_not_degerlendirme.c` | Veri + hesaplama + koşul | `40` ve `60` → 50.00, Gecti |
 | `10_donguye_neden_ihtiyac_var.c` | Tekrarlayan komutlar | Girdi yok → 1, 2, 3, 4, 5 ayrı satırlarda |
 | `11_for_temel.c` | Başlangıç, koşul, artırma | Girdi yok → önceki dosyayla aynı çıktı |
@@ -80,12 +83,17 @@ Ardından `i <= 5` yerine `i < 5` deneyin. Öğrencilerden neden bir satır eksi
 - `=` değer atar; `==` eşitliği kontrol eder.
 - `int` için okuma ve yazdırmada `%d` kullanılır.
 - `double` için `scanf` içinde `%lf`, `printf` içinde `%f` kullanılır.
+- `float` için `scanf` içinde `%f`, `printf` içinde `%f` kullanılır. `double` okuma biçimiyle karıştırmayın.
+- `char sube = 'A';` tek karakter tutar; `%c` ile yazdırılır. `'A'` ile `"A"` aynı şey değildir.
+- `if / else if / else` zincirinde ilk doğru koşulun bloğu çalışır, sonraki koşullar kontrol edilmez.
+- `switch` sabit değerleri seçmek için uygundur; not aralığı gibi karşılaştırmalar için `if / else if` kullanın.
+- `switch` içindeki `break`, bu seçim yapısından çıkar. `default`, hiçbir `case` eşleşmediğinde çalışır.
 - `scanf` örneklerinde değişkenin önünde `&` vardır; `printf` örneklerinde yoktur.
 - `5 / 2` sonucu 2, `5.0 / 2` sonucu 2.5 olur.
 - `for (...)` ve `if (...)` satırlarının sonuna `;` eklenmez; blok için süslü parantez açılır.
 - `toplam = 0` başlangıçta bir kez çalışmalıdır. Döngü içine konursa her turda biriken değer silinir.
 
-Fonksiyon yazma, diziler, pointer, iç içe döngüler, `while`, `do while`, `break` ve `continue` sonraki etkinliğe bırakılabilir.
+Fonksiyon yazma, diziler, pointer, iç içe döngüler, `while`, `do while`, döngülerde `break` kullanımı ve `continue` sonraki etkinliğe bırakılabilir. Bu etkinlikte `break` yalnızca `switch` bağlamında gösterilir.
 
 ## Ek materyal
 

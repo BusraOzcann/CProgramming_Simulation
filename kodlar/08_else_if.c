@@ -1,4 +1,8 @@
-/* KONU: Birden fazla durumdan birini secmek. */
+/* KONU: if / else if / else ile birden fazla durumdan birini secmek.
+ * if: ilk kosulu kontrol eder.
+ * else if: onceki kosul yanlissa yeni bir kosulu kontrol eder.
+ * else: onceki kosullarin hicbiri dogru degilse calisir; kosul yazilmaz.
+ */
 #include <stdio.h>
 
 int main(void) {
@@ -16,6 +20,10 @@ int main(void) {
     }
     /* Kosullar yukaridan asagi kontrol edilir.
      * Bu zincirde yalnizca secilen bir blok calisir.
+     * Ilk dogru kosul bulundugunda sonraki kosullar kontrol edilmez.
+     * Birden fazla else if eklenebilir; else varsa en sona yazilir.
+     * Ayri ayri if yazmak ile else if zinciri kurmak ayni sey degildir:
+     * bagimsiz if ifadelerinde her kosul ayri degerlendirilir.
      */
 
     return 0;

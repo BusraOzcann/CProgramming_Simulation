@@ -23,12 +23,25 @@ Bu dosya ALISTIRMALAR.md sorularının kısa yanıtlarını içerir. Döngü sor
 2. Üç kez çalışır; 1, 2 ve 3 yazılır. Sonraki kontrolde `i = 4` olduğu için koşul yanlıştır.
 3. Başlangıç bir kez çalışır. Her gövdeden sonra artırma, ardından koşul kontrolü yapılır.
 4. İçeride olursa her turda önceki toplam sıfırlanır; bu örnekte en sonda yalnızca son eklenen sayı kalır.
+5. Tek tırnak: `'A'`; yazdırma belirteci: `%c`.
+6. `break` yoksa sonraki `case` içindeki komutlar da çalışmaya devam edebilir. `default` hiçbir `case` eşleşmediğinde çalışır.
+7. Aralıklar için `if / else if` uygundur. `switch`, sabit tam sayı veya karakter değerlerini eşleştirir.
+
+## Ek görevlerin yanıtları
+
+- Karakter ve sıcaklık: `char sube = 'B';`, `float sicaklik = 24.5f;`. `printf("%c %.1f\n", sube, sicaklik);` ile yazdırılır. 02 numaralı dosyada çalışan örnek vardır.
+- Not aralıkları: `08a_not_araliklari.c`. 49 → Kaldi, 50 ve 69 → Gecer, 70 ve 84 → Iyi, 85 → Cok iyi. Eşikleri büyükten küçüğe kontrol edin.
+- Menü: `08b_switch_case.c` dosyasındaki üç mesajı görevdeki mesajlarla değiştirin; `default` geçersiz seçimi karşılar. 1, 2, 3 ve 9 ile deneyin.
+- `08a` içindeki koşullar bağımsız `if` ifadelerine çevrilirse 90 için üç koşul da doğrudur; üç mesaj yazılır. Sondaki `else` yalnızca `if (not >= 50)` ifadesine bağlanır. Zincirin neden tek bir seçim yaptığı böyle gösterilebilir.
 
 ## Anlatım ipuçları
 
 - Bir öğrenciden çıktıyı, başka bir öğrenciden gerekçesini isteyin.
 - `main` ve `#include` yapısını başlangıçta hazır iskelet olarak verin. Ayrıntılı bellek ve pointer anlatımına girmeyin.
 - Önce tek koşulu oturtun. Mantıksal operatörleri bu akışa yetiştirmek zorunda değilsiniz.
+- `char` için tek karakterle başlayın; isim saklama ve Türkçe karakter kodlaması ayrıntılarına girmeyin. `float` tipini tanıtıp hesaplamalarda `double` kullanmaya devam edin.
+- `else if` örneğinde 90'ın neden yalnızca ilk dala girdiğini sorun. Ardından menü örneğiyle `switch` konusuna geçin.
+- `switch` içindeki ilk `break` kaldırıldığında 1 seçimiyle iki mesaj yazıldığını gösterin; sonra `break` satırını geri ekleyin.
 - Döngüde ilk koşul yanlışsa gövdenin hiç çalışmadığını gösterin: 12 numaralı dosyada `n = 0` girin.
 - Öğrenci `for` başlığını açıklayamıyorsa toplam sorusuna geçmeden 11 numaralı örneği yeniden izleyin.
 - Simülasyonun işlevlerini varsaymadan mevcut özellikleriyle başlangıç, koşul, gövde ve artırma sırasını görünür kılın.
